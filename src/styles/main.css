@@ -1,0 +1,117 @@
+/* --- BASE VARIABLES --- */
+:root {
+  --bg-app: #edf2f7;
+  --text-dark: #1e293b;
+  --text-light: #64748b;
+  /* Default Neutral Theme */
+  --theme-color: #3b82f6; /* Blue */
+  --theme-glow: 0 10px 25px -5px rgba(59, 130, 246, 0.3);
+  --theme-border: rgba(59, 130, 246, 0.2);
+  --header-height: 70px;
+}
+
+/* --- THEME STATES --- */
+.dashboard.theme-safe {
+  --theme-color: #10b981; --theme-glow: 0 10px 30px -5px rgba(16, 185, 129, 0.4); --theme-border: rgba(16, 185, 129, 0.5);
+}
+.dashboard.theme-warning {
+  --theme-color: #f59e0b; --theme-glow: 0 10px 30px -5px rgba(245, 158, 11, 0.4); --theme-border: rgba(245, 158, 11, 0.5);
+}
+.dashboard.theme-danger {
+  --theme-color: #ef4444; --theme-glow: 0 15px 40px -5px rgba(239, 68, 68, 0.5); --theme-border: rgba(239, 68, 68, 0.6);
+  animation: pulse-danger 2s infinite;
+}
+@keyframes pulse-danger {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* --- Main Layout & Header --- */
+body {
+  font-family: 'Inter', sans-serif; background-color: var(--bg-app); color: var(--text-dark); margin: 0; padding: 0;
+  min-height: 100vh; display: flex; flex-direction: column;
+}
+
+/* NEW: Header Styles */
+.app-header {
+  height: var(--header-height);
+  background: white; border-bottom: 1px solid #e2e8f0;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 30px; position: fixed; top: 0; width: 100%; z-index: 10; box-sizing: border-box;
+}
+.header-brand { font-weight: 800; font-size: 1.2rem; color: var(--text-dark); display: flex; align-items: center; gap: 10px;}
+.header-user { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; font-weight: 600; }
+.user-avatar { width: 32px; height: 32px; background: var(--text-dark); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+/* Main Container adjustment for fixed header */
+.main-container {
+  flex: 1; display: flex; justify-content: center; align-items: center;
+  padding: 20px; margin-top: var(--header-height);
+}
+
+.dashboard {
+  display: grid; grid-template-columns: 1fr 1.3fr; gap: 2.5rem;
+  background: rgba(255, 255, 255, 0.95); padding: 2.5rem; border-radius: 24px;
+  border: 2px solid var(--theme-border); box-shadow: var(--theme-glow);
+  max-width: 1000px; width: 100%;
+  transition: all 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+  /* IMPORTANT: Set a min-height to prevent jumping during slide transitions */
+  min-height: 550px; 
+}
+
+@media (max-width: 850px) { .dashboard { grid-template-columns: 1fr; } }
+
+/* --- Left Panel (Visuals) --- */
+.visual-panel { display: flex; flex-direction: column; justify-content: center; align-items: center; border-right: 1px solid #e2e8f0; padding-right: 2rem; }
+.credit-card { width: 300px; height: 190px; background: linear-gradient(135deg, var(--text-dark) 0%, var(--theme-color) 100%); border-radius: 16px; padding: 25px; color: white; position: relative; box-shadow: 0 15px 25px -10px rgba(0,0,0,0.3); transition: all 0.6s ease; }
+.chip { width: 45px; height: 30px; background: #fbbf24; border-radius: 4px; margin-bottom: 35px; opacity: 0.8; }
+.card-number-static { font-family: monospace; font-size: 1.2rem; letter-spacing: 3px; opacity: 0.9; margin-bottom: 25px; }
+
+/* --- Right Panel (Form Input) & CAROUSEL --- */
+.form-panel { padding-left: 1rem; display: flex; flex-direction: column; overflow: hidden; /* Hide overflowing slides */ }
+h2 { margin-top: 0; color: var(--text-dark); margin-bottom: 1.5rem;}
+
+/* NEW: Carousel Mechanics */
+.carousel-track {
+  display: flex;
+  transition: transform 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+  /* Ensure the track is wide enough for both slides */
+  width: 200%; 
+}
+
+.carousel-slide {
+  width: 50%; /* Each slide takes half the track width (which is 100% of the container) */
+  flex-shrink: 0;
+  padding-right: 20px; /* Spacing between slides */
+  box-sizing: border-box;
+}
+
+/* Form Elements */
+.input-group { margin-bottom: 1.5rem; }
+label { display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-light); margin-bottom: 0.5rem; }
+.amount-input { width: 100%; padding: 16px; font-size: 1.5rem; font-weight: bold; border: 2px solid #e2e8f0; border-radius: 12px; color: var(--theme-color); transition: all 0.3s; box-sizing: border-box; }
+.amount-input:focus { outline: none; border-color: var(--theme-color); }
+
+/* Buttons */
+.btn-primary, .btn-secondary {
+  width: 100%; padding: 16px; border-radius: 12px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: all 0.3s; margin-top: 1rem;
+}
+.btn-primary { background: var(--theme-color); color: white; border: none; }
+.btn-primary:hover { filter: brightness(110%); transform: translateY(-2px); }
+.btn-secondary { background: white; color: var(--text-light); border: 2px solid #e2e8f0; }
+.btn-secondary:hover { background: #f8fafc; border-color: var(--theme-color); color: var(--theme-color);}
+
+/* Tech Panel Grids */
+.tech-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;}
+.tech-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 15px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;}
+.tech-grid input { padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.8rem; text-align: center; width: 100%; box-sizing: border-box; color: var(--text-dark);}
+.tech-grid input:focus { border-color: var(--theme-color); outline: none; background: white;}
+
+/* Risk Gauge */
+.risk-gauge-container { margin-top: 2rem; }
+.gauge-label { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 8px; color: var(--theme-color); }
+.progress-track { width: 100%; height: 24px; background: #e2e8f0; border-radius: 12px; overflow: hidden; position: relative; }
+.progress-fill { height: 100%; background: var(--theme-color); background-image: linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent); background-size: 20px 20px; border-radius: 12px; transition: width 1s cubic-bezier(0.4, 0.0, 0.2, 1), background-color 0.6s ease; animation: progress-stripes 1s linear infinite; }
+@keyframes progress-stripes { from { background-position: 20px 0; } to { background-position: 0 0; } }
+.result-explanation { margin-top: 1rem; padding: 1rem; background: #f1f5f9; border-radius: 8px; font-size: 0.9rem; border-left: 4px solid var(--theme-color); }
