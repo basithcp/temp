@@ -114,10 +114,9 @@ export const Signup = () => {
       try {
         const user = await registerMerchant(formData.username, formData.password);
         login(user);
-        // Add dummy data for new user
-        import('../services/api').then(mod => {
-             mod.analyzeRisk({Amount: 150.00, V1: 0.5}, user);
-        });
+        
+        // --- REMOVED THE AUTOMATIC DUMMY TRANSACTION CODE FROM HERE ---
+        
         navigate('/merchant/dashboard');
       } catch (err) {
         setError(err.message);
