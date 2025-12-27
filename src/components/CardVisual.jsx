@@ -5,11 +5,10 @@ const CardVisual = () => {
       <div className="chip"></div>
       {/* Static, obfuscated data representing a "tokenized" card transaction */}
       <div className="card-number-static">
-        **** **** **** 3920
+        **** **** **** XXXX
       </div>
       <div style={{display:'flex', justifyContent:'space-between', opacity:0.8, fontSize:'0.8rem'}}>
-        <div>TOKENIZED TRANSACTION</div>
-        <div>SSL ENCRYPTED</div>
+
       </div>
       <div style={{position:'absolute', bottom:'25px', right:'25px', fontWeight:'bold', fontStyle:'italic'}}>
         KAGGLE PAY
