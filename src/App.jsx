@@ -1,59 +1,44 @@
 import { Navigate, Outlet, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import './styles/main.css';
 
 // Components
-import { LayoutDashboard, List, LogOut } from 'lucide-react';
+import { LayoutDashboard, List, PlusCircle } from 'lucide-react';
 import { Login, Signup } from './components/AuthForms';
-import Header from './components/Header';
-import PaymentForm from './components/PaymentForm'; // Merchant Dashboard
+import MerchantDashboard from './components/MerchantDashboard';
+import MerchantTransactions from './components/MerchantTransactions';
+import Sidebar from './components/Sidebar';
 import AdminDashboard from './components/admin/AdminDashboard';
+import AdminTransactions from './components/admin/AdminTransactions';
 
-// --- LAYOUTS ---
-
-// Layout for Merchant (Has the top header)
-const MerchantLayout = () => (
-  <>
-    <Header />
-    <main className="main-container"><Outlet /></main>
-  </>
-);
-
-// Layout for Admin (Sidebar)
-const AdminLayout = () => {
-    const { logout } = useAuth();
-    return (
-    <div className="admin-layout">
-      <aside className="admin-sidebar">
-         <div className="sidebar-brand">🛡️ Admin Panel</div>
-         <nav className="sidebar-menu">
-            <div className="menu-item active"><LayoutDashboard size={20} /> Dashboard</div>
-            <div className="menu-item"><List size={20} /> Transactions</div>
-         </nav>
-         <div className="sidebar-footer">
-            <button onClick={logout} className="menu-item" style={{background:'none', border:'none', cursor:'pointer', width:'100%'}}>
-                <LogOut size={20}/> Logout
-            </button>
-         </div>
-      </aside>
-      <main className="admin-main">
-         <div className="admin-header">
-             <h1>Fraud Monitoring Overview</h1>
-         </div>
+// --- SHARED SIDEBAR LAYOUT ---
+const SidebarLayout = ({ brand, menuItems }) => (
+  <div className="app-layout">
+      <Sidebar brandName={brand} menuItems={menuItems} />
+      <main className="main-content">
          <Outlet />
       </main>
-    </div>
-    )
-};
+  </div>
+);
+
+// Define menus
+const adminMenu = [
+    { label: 'Overview', path: '/admin/dashboard', icon: <LayoutDashboard size={20} /> },
+    { label: 'Global Transactions', path: '/admin/transactions', icon: <List size={20} /> },
+];
+const merchantMenu = [
+    { label: 'New Transaction', path: '/merchant/dashboard', icon: <PlusCircle size={20} /> },
+    { label: 'My History', path: '/merchant/transactions', icon: <List size={20} /> },
+];
 
 // --- ROUTE PROTECTION ---
 const PrivateRoute = ({ children, requiredRole }) => {
   const { user, loading } = useAuth();
-  if (loading) return <div>Loading...</div>; // Or a spinner
+  if (loading) return <div>Loading...</div>; 
   if (!user) return <Navigate to={requiredRole === 'admin' ? '/admin/login' : '/login'} />;
   if (requiredRole && user.role !== requiredRole) {
-      // Logged in but wrong role, redirect to their appropriate home
-      return <Navigate to={user.role === 'admin' ? '/admin/dashboard' : '/merchant'} />;
+      return <Navigate to={user.role === 'admin' ? '/admin/dashboard' : '/merchant/dashboard'} />;
   }
   return children;
 };
@@ -62,30 +47,35 @@ const PrivateRoute = ({ children, requiredRole }) => {
 function App() {
   return (
     <AuthProvider>
+      <ToastProvider> {/* Wrap with Toast Provider */}
       <Router>
         <Routes>
           {/* Public Auth Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/admin/login" element={<Login />} />
-          
-          {/* Redirect root to login for now */}
           <Route path="/" element={<Navigate to="/login" />} />
 
           {/* Protected Merchant Routes */}
-          <Route element={<PrivateRoute requiredRole="merchant"><MerchantLayout /></PrivateRoute>}>
-             <Route path="/merchant" element={<PaymentForm />} />
+          <Route element={<PrivateRoute requiredRole="merchant"><SidebarLayout brand="KaggleGuard" menuItems={merchantMenu}/></PrivateRoute>}>
+             <Route path="/merchant/dashboard" element={<MerchantDashboard />} />
+             <Route path="/merchant/transactions" element={<MerchantTransactions />} />
+             {/* Redirect base merchant path */}
+             <Route path="/merchant" element={<Navigate to="/merchant/dashboard" />} />
           </Route>
 
           {/* Protected Admin Routes */}
-          <Route element={<PrivateRoute requiredRole="admin"><AdminLayout /></PrivateRoute>}>
+          <Route element={<PrivateRoute requiredRole="admin"><SidebarLayout brand="Admin Panel" menuItems={adminMenu}/></PrivateRoute>}>
              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+             <Route path="/admin/transactions" element={<AdminTransactions />} />
+             {/* Redirect base admin path */}
+             <Route path="/admin" element={<Navigate to="/admin/dashboard" />} />
           </Route>
 
-          {/* Catch-all */}
           <Route path="*" element={<Navigate to="/login" />} />
         </Routes>
       </Router>
+      </ToastProvider>
     </AuthProvider>
   );
 }

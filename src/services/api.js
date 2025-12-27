@@ -9,12 +9,11 @@ const getDB = (key) => JSON.parse(localStorage.getItem(key)) || [];
 const setDB = (key, data) => localStorage.setItem(key, JSON.stringify(data));
 
 // --- AUTHENTICATION SIMULATION ---
-
+// (Keep registerMerchant and loginUser exactly as they were in the previous version)
 export const registerMerchant = async (username, password) => {
-  await new Promise(r => setTimeout(r, 500)); // Simulate delay
+  await new Promise(r => setTimeout(r, 500)); 
   const users = getDB(USERS_KEY);
   if (users.find(u => u.username === username)) throw new Error("Username already exists");
-  
   const newUser = { id: uuidv4(), username, password, role: 'merchant' };
   users.push(newUser);
   setDB(USERS_KEY, users);
@@ -23,37 +22,27 @@ export const registerMerchant = async (username, password) => {
 
 export const loginUser = async (username, password, requiredRole) => {
   await new Promise(r => setTimeout(r, 500));
-  
-  // Hardcoded Admin for testing
   if (requiredRole === 'admin' && username === 'admin' && password === 'admin123') {
     return { id: 'admin-1', username: 'admin', role: 'admin' };
   }
-
   const users = getDB(USERS_KEY);
   const user = users.find(u => u.username === username && u.password === password && u.role === 'merchant');
-
   if (!user && requiredRole === 'merchant') throw new Error("Invalid credentials");
   if (!user && requiredRole === 'admin') throw new Error("Not an admin account");
-  
   return { id: user.id, username: user.username, role: user.role };
 };
 
 
 // --- RISK API SIMULATION (POST) ---
-
 export const analyzeRisk = async (transactionPayload, currentUser) => {
-    // 1. Simulate Network Delay
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // Simulating network delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
-    // 2. Generate Unique ID
     const transactionId = uuidv4().slice(0, 8).toUpperCase();
-
-    // 3. Fake ML Logic (High amount = high risk for demo)
     const isHighAmount = transactionPayload.Amount > 5000;
-    // Add some randomness for "moderate" results
     let probability = isHighAmount ? (Math.random() * 0.2 + 0.8) : (Math.random() * 0.15); 
     if(transactionPayload.Amount > 1000 && transactionPayload.Amount <= 5000) {
-         probability = Math.random() * 0.4 + 0.1; // Moderate range
+         probability = Math.random() * 0.4 + 0.1; 
     }
     
     let riskLabel = 'low';
@@ -68,25 +57,36 @@ export const analyzeRisk = async (transactionPayload, currentUser) => {
       timestamp: new Date().toISOString()
     };
 
-    // 4. "SAVE TO DATABASE" (LocalStorage)
     const newRecord = {
         ...result,
-        payload: transactionPayload, // Store the input inputs (Amount, V1-V28)
+        payload: transactionPayload,
         merchant_username: currentUser.username || 'demo_user'
     };
 
     const transactions = getDB(TRANSACTIONS_KEY);
-    transactions.unshift(newRecord); // Add to start of array
+    transactions.push(newRecord); // Add to end
     setDB(TRANSACTIONS_KEY, transactions);
 
-    alert(`Transaction ${transactionId} Posted & Saved!`);
+    // REMOVED ALERT. The UI component will handle the toast notification.
     return result;
 };
 
-// --- ADMIN API SIMULATION (GET) ---
+// --- GET APIs (Sorted Newest First) ---
 
+// Admin: Get All
 export const getAllTransactions = async () => {
     await new Promise(r => setTimeout(r, 500));
-    // Read from our fake localstorage DB
-    return getDB(TRANSACTIONS_KEY);
+    const data = getDB(TRANSACTIONS_KEY);
+    // Sort descending by timestamp
+    return data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+}
+
+// Merchant: Get Only Theirs
+export const getMerchantTransactions = async (username) => {
+    await new Promise(r => setTimeout(r, 500));
+    const allData = getDB(TRANSACTIONS_KEY);
+    // Filter by username OR 'demo_user' for initial signups who haven't done txns yet
+    const merchantData = allData.filter(txn => txn.merchant_username === username);
+    // Sort descending by timestamp
+    return merchantData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 }
