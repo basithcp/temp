@@ -1,37 +1,92 @@
-// Change this to false when your Python Flask server is running
-const USE_MOCK_DATA = true; 
-const API_URL = "http://localhost:5000/analyze-risk";
+import { v4 as uuidv4 } from 'uuid';
 
-export const analyzeRisk = async (transactionData) => {
-  if (USE_MOCK_DATA) {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Simple logic: if amount > 5000, pretend it's fraud for testing
-    const isHighAmount = transactionData.Amount > 5000;
-    const probability = isHighAmount ? 0.92 : 0.04;
-    
-    return {
-      fraud_probability: probability,
-      risk_label: probability > 0.5 ? "high" : "low",
-      explanation: isHighAmount 
-        ? "Unusually high transaction amount for this time window." 
-        : "Transaction appears normal."
-    };
-  }
+// --- LOCAL STORAGE KEYS ---
+const USERS_KEY = 'fraudApp_users';
+const TRANSACTIONS_KEY = 'fraudApp_transactions';
 
-  // Real API Call
-  try {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(transactionData),
-    });
+// --- HELPER: DB ACCESS ---
+const getDB = (key) => JSON.parse(localStorage.getItem(key)) || [];
+const setDB = (key, data) => localStorage.setItem(key, JSON.stringify(data));
 
-    if (!response.ok) throw new Error("API Connection Failed");
-    return await response.json();
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
+// --- AUTHENTICATION SIMULATION ---
+
+export const registerMerchant = async (username, password) => {
+  await new Promise(r => setTimeout(r, 500)); // Simulate delay
+  const users = getDB(USERS_KEY);
+  if (users.find(u => u.username === username)) throw new Error("Username already exists");
+  
+  const newUser = { id: uuidv4(), username, password, role: 'merchant' };
+  users.push(newUser);
+  setDB(USERS_KEY, users);
+  return { id: newUser.id, username: newUser.username, role: newUser.role };
 };
+
+export const loginUser = async (username, password, requiredRole) => {
+  await new Promise(r => setTimeout(r, 500));
+  
+  // Hardcoded Admin for testing
+  if (requiredRole === 'admin' && username === 'admin' && password === 'admin123') {
+    return { id: 'admin-1', username: 'admin', role: 'admin' };
+  }
+
+  const users = getDB(USERS_KEY);
+  const user = users.find(u => u.username === username && u.password === password && u.role === 'merchant');
+
+  if (!user && requiredRole === 'merchant') throw new Error("Invalid credentials");
+  if (!user && requiredRole === 'admin') throw new Error("Not an admin account");
+  
+  return { id: user.id, username: user.username, role: user.role };
+};
+
+
+// --- RISK API SIMULATION (POST) ---
+
+export const analyzeRisk = async (transactionPayload, currentUser) => {
+    // 1. Simulate Network Delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    // 2. Generate Unique ID
+    const transactionId = uuidv4().slice(0, 8).toUpperCase();
+
+    // 3. Fake ML Logic (High amount = high risk for demo)
+    const isHighAmount = transactionPayload.Amount > 5000;
+    // Add some randomness for "moderate" results
+    let probability = isHighAmount ? (Math.random() * 0.2 + 0.8) : (Math.random() * 0.15); 
+    if(transactionPayload.Amount > 1000 && transactionPayload.Amount <= 5000) {
+         probability = Math.random() * 0.4 + 0.1; // Moderate range
+    }
+    
+    let riskLabel = 'low';
+    if (probability > 0.5) riskLabel = 'high';
+    else if (probability >= 0.1) riskLabel = 'moderate';
+
+    const result = {
+      transaction_id: transactionId,
+      fraud_probability: parseFloat(probability.toFixed(4)),
+      risk_label: riskLabel,
+      explanation: isHighAmount ? "Amount exceeds typical threshold." : "Transaction pattern is normal.",
+      timestamp: new Date().toISOString()
+    };
+
+    // 4. "SAVE TO DATABASE" (LocalStorage)
+    const newRecord = {
+        ...result,
+        payload: transactionPayload, // Store the input inputs (Amount, V1-V28)
+        merchant_username: currentUser.username || 'demo_user'
+    };
+
+    const transactions = getDB(TRANSACTIONS_KEY);
+    transactions.unshift(newRecord); // Add to start of array
+    setDB(TRANSACTIONS_KEY, transactions);
+
+    alert(`Transaction ${transactionId} Posted & Saved!`);
+    return result;
+};
+
+// --- ADMIN API SIMULATION (GET) ---
+
+export const getAllTransactions = async () => {
+    await new Promise(r => setTimeout(r, 500));
+    // Read from our fake localstorage DB
+    return getDB(TRANSACTIONS_KEY);
+}

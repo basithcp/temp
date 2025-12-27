@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { analyzeRisk } from '../services/api';
 import CardVisual from './CardVisual';
 import RiskGauge from './RiskGauge';
 import TechnicalPanel from './TechnicalPanel';
 
 const PaymentForm = () => {
+  const { user } = useAuth();
   // --- STATE ---
   const [currentStep, setCurrentStep] = useState(1); // 1 = Amount, 2 = Vectors
   const [amount, setAmount] = useState('');
@@ -16,6 +18,8 @@ const PaymentForm = () => {
 
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+
+
 
   // --- HELPERS ---
   const getThemeClass = () => {
@@ -49,7 +53,7 @@ const PaymentForm = () => {
     };
 
     try {
-      const data = await analyzeRisk(payload);
+      const data = await analyzeRisk(payload, user);
       setResult(data);
       // Optional: Auto-navigate back to step 1 to show result clearly alongside amount
       // setCurrentStep(1); 
@@ -73,6 +77,13 @@ const PaymentForm = () => {
           <p style={{fontWeight:'700', marginBottom:'5px'}}>Step {currentStep} of 2</p>
           <p>{currentStep === 1 ? "Enter Transaction Value" : "Configure Risk Vectors"}</p>
         </div>
+        {/* 4. Show Transaction ID if result exists */}
+        {result && (
+            <div style={{textAlign:'center', marginBottom:'1rem', padding:'8px', background:'rgba(255,255,255,0.5)', borderRadius:'8px'}}>
+                <small style={{display:'block', color:'var(--text-light)'}}>Transaction ID</small>
+                <code style={{fontWeight:'bold'}}>{result.transaction_id}</code>
+            </div>
+        )}
         {/* Show Gauge only if we have a result */}
         {result && <RiskGauge result={result} />}
       </div>
